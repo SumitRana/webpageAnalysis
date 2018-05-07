@@ -1,5 +1,6 @@
 // Author: Sumit Rana : Sam
-// Identification attributes - data-plugin="etrack", data-track="view",data-elementid
+// View : Identification attributes - data-plugin="etrack", data-track="view",data-elementid
+// Click : attrs - data-plugin="etrack", data-track="click"
 
 var analyzed_list = []
 var total_scroll_counts = 0;
@@ -20,6 +21,7 @@ var ViewAnalyze = (function(){
 			this.counter = 0;
 			this.timer;
 			this.element = elm;
+			this.number_of_clicks = 0;
 			this.is_inside_viewport = function(){
 				
 				dim = this.element.getBoundingClientRect();
@@ -67,9 +69,24 @@ var ViewAnalyze = (function(){
 		
 				total_scroll_counts++;
 			};
+
+			this.serializeElement = function(endtime){
+				var td = endtime.getTime()-start_time.getTime();
+				var min = this.visible_time/60;
+				var data = {
+					'element': this.element,
+					'visible-counts':this.visible_counts,
+					'total-visible_counts': total_scroll_counts,
+					'total-visible-time':{'minutes': Math.floor(this.visible_time/60),'seconds':(this.visible_time%60)},
+					'total_clicks': this.number_of_clicks,
+					'engagement_rate_percentage':(this.visible_time/td)*100
+				}
+				return data;
+			};
 		};
 
 		this.bindViewAnalyzer = function(){
+			// View Event Analyzer 
 			var elements = document.querySelectorAll('[data-plugin="etrack"][data-track="view"]');
 			var i=0;
 			for(i=0;i<elements.length;i++){
@@ -82,13 +99,22 @@ var ViewAnalyze = (function(){
 					element_objects[i].is_inside_viewport();
 				}
 			};
-		}
+
+			// Click Event Analyzer
+			var elements = document.querySelectorAll('[data-plugin="etrack"][data-track]');
+			var k=0;
+			for(k=0;k<element_objects.length;k++){
+				element_objects[k].addEventListener('click',function(){
+					this.number_of_clicks++;
+				});
+			}
+		};
 
 		
 		this.getAnalyzedData = function(){
 			prepare_data();
 			return analyzed_list;
-		}
+		};
 
 		var prepare_data = function()
 		{	var end_time = new Date();
@@ -106,8 +132,8 @@ var ViewAnalyze = (function(){
 					'engagement_rate_percentage':(element_objects[i].visible_counts/total_scroll_counts)*100,
 				}
 				analyzed_list.push(data);
-			}	
-		}
+			}
+		};
 	};
 
 	return {
